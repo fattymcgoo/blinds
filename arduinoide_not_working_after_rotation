@@ -1,0 +1,125 @@
+#define BLYNK_TEMPLATE_ID           "***"
+#define BLYNK_DEVICE_NAME           "***"
+#define BLYNK_AUTH_TOKEN            "***"
+#define dirPin 5
+#define stepPin 4
+#define enablePin 15
+#define sleepPin 12
+#define resetPin 14
+#define stepsPerRevolution 200
+#define BLYNK_PRINT Serial
+
+
+#include <ESP8266WiFi.h>
+#include <BlynkSimpleEsp8266.h>
+
+bool Right = false;
+bool Left = false;
+
+char auth[] = BLYNK_AUTH_TOKEN;
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+char ssid[] = "***";
+char pass[] = "***";
+
+ int rturned = 0;                                     //Right turn check = 0 on startup
+ int lturned = 0; 
+BlynkTimer timer;
+
+// This function is called every time the Virtual Pin 0 state changes
+BLYNK_WRITE(V1){                                      // read input from virtual pin V1
+  Right = param.asInt();                              // assigning incoming value from pin V§1 to a variable
+  }
+  
+BLYNK_WRITE(V0){                                      // read input from virtual pin V0
+  Left = param.asInt();                               // assigning incoming value from pin V0 to a variable
+  }
+
+// This function is called every time the device is connected to the Blynk.Cloud
+BLYNK_CONNECTED();
+
+void setup()
+{
+  pinMode(stepPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
+  pinMode(enablePin, OUTPUT);
+  pinMode(sleepPin, OUTPUT);
+  pinMode(resetPin, OUTPUT);
+  // Debug console
+  Serial.begin(115200);
+
+ digitalWrite(resetPin, HIGH);
+ 
+  Blynk.begin(auth, ssid, pass);
+  // You can also specify server:
+  //Blynk.begin(auth, ssid, pass, "blynk.cloud", 80);
+  //Blynk.begin(auth, ssid, pass, IPAddress(192,168,1,100), 8080);
+
+}
+
+void loop()
+{
+  Blynk.run();
+  timer.run();
+
+  if ((Right) && (rturned == 0)){                                          //if turn right is triggered and hasn't turned yet
+  digitalWrite(enablePin, LOW);
+  digitalWrite(sleepPin, HIGH);
+  digitalWrite(resetPin, HIGH);
+  digitalWrite(dirPin, HIGH);  
+    for (int i = 0; i < 25 * stepsPerRevolution; i++) {                     // turns 25 times - this happens
+    // These four lines result in 1 step:
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(1000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(1000);
+    }
+
+  delay(1000); 
+  Serial.println("Right turn");                                              // this is the code that seems to not run
+  rturned = 1;                                                               // this is the code that seems to not run
+  lturned = 0;                                                               // this is the code that seems to not run
+  Right = 0;                                                                 // this is the code that seems to not run
+  Blynk.virtualWrite(V1, "0");                                               // this is the code that seems to not run
+  digitalWrite(enablePin, HIGH);                                             // this is the code that seems to not run
+  digitalWrite(sleepPin, LOW);                                               // this is the code that seems to not run
+  digitalWrite(resetPin, LOW);                                               // this is the code that seems to not run
+  }
+  else if (Right) {
+    Right = 0;
+    Blynk.virtualWrite(V1, "0");
+  }
+  delay(20);                                           
+  
+  if ((Left) && (lturned == 0)){                                           //if turn left is triggered and hasn't turned yet
+    digitalWrite(enablePin, LOW);
+    digitalWrite(sleepPin, HIGH);
+    digitalWrite(resetPin, HIGH);
+    digitalWrite(dirPin, LOW);
+    // if condition 
+    for (int i = 0; i < 25 * stepsPerRevolution; i++) {                    // turns 25 times
+    // These four lines result in 1 step:
+    digitalWrite(stepPin, HIGH);
+    delayMicroseconds(1000);
+    digitalWrite(stepPin, LOW);
+    delayMicroseconds(1000);
+    }
+
+  delay(1000);                                  
+  Serial.println("Left turn");                                                   // this is the code that seems to not run
+  lturned = 1;                                                                   // this is the code that seems to not run
+  rturned = 0;                                                                   // this is the code that seems to not run
+  Left = 0;                                                                      // this is the code that seems to not run
+  Blynk.virtualWrite(V0, "0");                                                   // this is the code that seems to not run
+  digitalWrite(enablePin, HIGH);                                                 // this is the code that seems to not run
+  digitalWrite(sleepPin, LOW);                                                   // this is the code that seems to not run
+  digitalWrite(resetPin, LOW);                                                   // this is the code that seems to not run
+  }
+  else if (Left) {
+    Left = 0;
+    Blynk.virtualWrite(V0, "0");
+  }
+  delay(20);                                           // delay 20ms 
+
+}
